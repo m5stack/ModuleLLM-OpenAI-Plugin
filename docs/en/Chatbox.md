@@ -16,19 +16,19 @@
 ## Download the corresponding platform from the Chatbox official website [Click to jump](https://chatboxai.app/en)
  
 
-![本地图片](../images/01-chatbox.png "本地图片")
+![本地图片](../../images/01-chatbox.png "本地图片")
 
 ## Click Settings and add Model Provier
-![本地图片](../images/02-chatbox.png "本地图片")
+![本地图片](../../images/02-chatbox.png "本地图片")
 
 ## API Host is set to `http://192.168.20.186:8000/v1`, Note that IP is your ModuleLLM IP, API Path is set to `/chat/completions`
-![本地图片](../images/03-chatbox.png "本地图片")
+![本地图片](../../images/03-chatbox.png "本地图片")
 
 ## Turn off Inject default metadata under the CHAT tab
-![本地图片](../images/04-chatbox.png "本地图片")
+![本地图片](../../images/04-chatbox.png "本地图片")
 
 ## Note that the length of the input text cannot exceed the maximum length supported by the model
-![本地图片](../images/05-chatbox.png "本地图片")
+![本地图片](../../images/05-chatbox.png "本地图片")
 
 ## Click the red box to stop generating.
-![本地图片](../images/06-chatbox.png "本地图片")
+![本地图片](../../images/06-chatbox.png "本地图片")
