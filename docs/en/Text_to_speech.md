@@ -10,13 +10,13 @@ Generates audio from the input text.
 from pathlib import Path
 from openai import OpenAI
 
-openai = OpenAI(
+client = OpenAI(
     api_key="sk-",
     base_url="http://192.168.20.186:8000/v1"
 )
 
 speech_file_path = Path(__file__).parent / "speech.mp3"
-with openai.audio.speech.with_streaming_response.create(
+with client.audio.speech.with_streaming_response.create(
   model="melotts-en-us",
   voice="alloy",
   input="The quick brown fox jumped over the lazy dog."

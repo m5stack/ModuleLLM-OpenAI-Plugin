@@ -15,6 +15,8 @@ transcript = client.audio.transcriptions.create(
   language="en",
   file=audio_file
 )
+
+print(transcript)
 ```
 
 ## Request body

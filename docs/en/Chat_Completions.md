@@ -6,7 +6,7 @@ The Chat Completions API endpoint will generate a model response from a list of 
 
 ```python
 from openai import OpenAI
-openai = OpenAI(
+client = OpenAI(
     api_key="sk-",
     base_url="http://192.168.20.186:8000/v1"
 )
