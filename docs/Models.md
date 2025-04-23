@@ -8,12 +8,13 @@ Lists the currently available models, and provides basic information about each 
 
 ```python
 from openai import OpenAI
-openai = OpenAI(
+client = OpenAI(
     api_key="sk-",
     base_url="http://192.168.20.186:8000/v1"
 )
 
 client.models.list()
+print(client.models.list())
 ```
 
 ## Returns

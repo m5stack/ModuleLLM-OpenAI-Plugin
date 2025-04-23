@@ -1,45 +1,33 @@
-# Audio
-Learn how to turn audio into text or text into audio.
-
-# Create speech
-post https://192.168.20.186:8000/v1/audio/speech
-
-Generates audio from the input text.
+# Create transcription
+`post http://192.168.20.186:8000/v1/audio/transcriptions`
+Transcribes audio into the input language.
 
 ```python
-from pathlib import Path
 from openai import OpenAI
-
-openai = OpenAI(
+client = OpenAI(
     api_key="sk-",
     base_url="http://192.168.20.186:8000/v1"
 )
 
-speech_file_path = Path(__file__).parent / "speech.mp3"
-with openai.audio.speech.with_streaming_response.create(
-  model="gpt-4o-mini-tts",
-  voice="alloy",
-  input="The quick brown fox jumped over the lazy dog."
-) as response:
-  response.stream_to_file(speech_file_path)
+audio_file = open("speech.mp3", "rb")
+transcript = client.audio.transcriptions.create(
+  model="whisper-tiny",
+  language="en",
+  file=audio_file
+)
 ```
 
 ## Request body
 
-### input `string` <span style="color: red;">Required</span>
-The text to generate audio for. The maximum length is `1024` characters.
+### file file Required
+The audio file object (not file name) to transcribe, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
 
 ### model `string` <span style="color: red;">Required</span>
-One of the available TTS models: `melotts-zh-cn`, `melotts-en-us`.
+ID of the model to use. The options are `whisper-tiny`, `whisper-base`, and `whisper-small`.
 
-### voice 
-`Voice selection is not currently supported`
+### language `string` <span style="color: red;">Required</span>
+The language of the input audio. Supplying the input language in ISO-639-1 (e.g. en) format will improve accuracy and latency.
 
-### response_format `string` Optional Defaults to mp3
-The format to audio in. Supported formats are `mp3`, `opus`, `aac`, `flac`, `wav`, and `pcm`.
-
-### speed `number` Optional Defaults to 1
-The speed of the generated audio. Select a value from `0.25` to `2.0`. `1.0` is the default.
-
-## Returns
-The audio file content.
+### response_format string Optional
+Defaults to json
+`Currently only supported format is json.`
