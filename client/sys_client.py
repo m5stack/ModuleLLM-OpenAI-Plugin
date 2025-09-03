@@ -89,6 +89,10 @@ class SYSClient:
     def cmminfo(self) -> dict:
         request_id = self._send_request("cmminfo", "", {})
         return self._wait_response(request_id)
+    
+    def axclcmminfo(self) -> dict:
+        request_id = self._send_request("axcl_cmminfo", "", {})
+        return self._wait_response(request_id)
 
     def hwinfo(self) -> dict:
         request_id = self._send_request("hwinfo", "", {})

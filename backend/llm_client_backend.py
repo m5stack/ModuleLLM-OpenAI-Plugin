@@ -77,8 +77,8 @@ class LlmClientBackend(BaseModelBackend):
                 await asyncio.sleep(retry_interval)
                 await asyncio.wait_for(self._pool_lock.acquire(), timeout=timeout - (time.time() - start_time))
                 
-            if "memory_required" in self.config:
-                await self.memory_checker.check_memory(self.config["memory_required"])
+            # if "memory_required" in self.config:
+            #     await self.memory_checker.check_memory(self.config["memory_required"])
 
             self.logger.debug("Creating new LLM client")
             client = LLMClient(
@@ -182,39 +182,35 @@ class LlmClientBackend(BaseModelBackend):
     def _count_tokens(self, text: str) -> int:
         """Count the number of tokens in a given text."""
         return len(self.tokenizer.encode(text))
+    
+    def _truncate_history(self, request: ChatCompletionRequest) -> List[Message]:
+        messages = request.messages
+        if not messages:
+            return []
 
-    def _truncate_history(self, messages: List[Message]) -> List[Message]:
-        """Truncate history to fit model context window"""
-        total_length = 0
-        keep_messages = []
-        
-        for msg in reversed(messages):
-            if msg.role == "system":
-                total_length += self._count_tokens(msg.content)
-                total_length += 16
+        last_msg = messages[-1]
 
-        # Process in reverse to keep latest messages
-        for msg in reversed(messages):
+        if isinstance(last_msg.content, list):
             msg_length = 0
-            if isinstance(msg.content, list):
-                for item in msg.content:
-                    if item.type == "text":
-                        msg_length += self._count_tokens(item.text)
-                total_length += msg_length
-                keep_messages.insert(0, msg)
-                break
-            else:
-                msg_length = self._count_tokens(msg.content)
-            if msg.role == "user":
-                msg_length += 3
-            if msg.role == "assistant":
-                msg_length += 3
-            if total_length + msg_length > self.MAX_CONTEXT_LENGTH:
-                break
-            total_length += msg_length
-            keep_messages.insert(0, msg)  # Maintain original order
-            
-        return keep_messages
+            for item in last_msg.content:
+                if item.type == "text":
+                    msg_length += self._count_tokens(item.text)
+        else:
+            msg_length = self._count_tokens(last_msg.content)
+
+        if last_msg.role in ("user", "assistant"):
+            msg_length += 3
+
+        if msg_length > self.MAX_CONTEXT_LENGTH:
+            return []
+
+        # self.inference_stream("reset", None, request)
+
+        print(f"messages: {messages}")
+        print(f"Truncated messages: {messages[-1:]}")
+        print(f"Final messages: {messages}")
+        return [last_msg]
+
 
     async def download_image(self, url):
         try:
@@ -231,7 +227,7 @@ class LlmClientBackend(BaseModelBackend):
 
     async def generate(self, request: ChatCompletionRequest):
         try:
-            truncated_messages = self._truncate_history(request.messages)
+            truncated_messages = self._truncate_history(request)
             
             if not truncated_messages:
                 raise HTTPException(
@@ -251,7 +247,7 @@ class LlmClientBackend(BaseModelBackend):
                 
                 message_content = await self._parse_content(m.content, base64_images)
                 if message_content:
-                    query_lines.append(f"{m.role}: {message_content}")
+                    query_lines.append(message_content)
 
             final_query = []
             if system_prompt:
@@ -259,8 +255,10 @@ class LlmClientBackend(BaseModelBackend):
             if base64_images:
                 pass
             final_query.append("\n".join(query_lines))
-            
+            print(f"Final query: {final_query}")
+
             query = "\n\n".join(filter(None, final_query))
+            print(f"268 Final query: {query}")
 
             self.logger.debug(
                 f"Processed query | System prompt: {len(system_prompt)} chars | "

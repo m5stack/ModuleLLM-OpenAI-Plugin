@@ -72,6 +72,15 @@ class GetModelList:
                         if '-p256-' in mode:
                             new_entry['max_context_length'] = 256
 
+                        if '-p512-' in mode:
+                            new_entry['max_context_length'] = 512
+
+                        if '-p2048-' in mode:
+                            new_entry['max_context_length'] = 2048
+
+                        if '-ctx-' in mode:
+                            new_entry['max_context_length'] = 1024
+
                     elif model_type == 'tts':
                         if 'melotts' in mode.lower():
                             obj = 'melotts.setup'
