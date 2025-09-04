@@ -56,6 +56,13 @@ class GetModelList:
                             "object": f"{model_type}.setup",
                             "system_prompt": "You are a helpful assistant."
                         })
+
+                        mode_param = model_data.get("mode_param", {})
+                        precompute_len = None
+                        cmm_size = None
+                        if isinstance(mode_param, dict):
+                            precompute_len = mode_param.get("precompute_len")
+                            cmm_size = mode_param.get("cmm_size")
                         if '-1.5B-' in mode:
                             new_entry['memory_required'] = 1782579
                             new_entry['pool_size'] = 1
@@ -68,6 +75,8 @@ class GetModelList:
                         else:
                             new_entry['memory_required'] = 1363148
                             new_entry['pool_size'] = 2
+                        if cmm_size is not None:
+                            new_entry['memory_required'] = cmm_size
 
                         if '-p256-' in mode:
                             new_entry['max_context_length'] = 256
@@ -80,6 +89,9 @@ class GetModelList:
 
                         if '-ctx-' in mode:
                             new_entry['max_context_length'] = 1024
+
+                        if precompute_len is not None:
+                            new_entry['max_context_length'] = precompute_len
 
                     elif model_type == 'tts':
                         if 'melotts' in mode.lower():

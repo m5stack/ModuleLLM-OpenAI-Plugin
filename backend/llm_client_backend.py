@@ -77,8 +77,8 @@ class LlmClientBackend(BaseModelBackend):
                 await asyncio.sleep(retry_interval)
                 await asyncio.wait_for(self._pool_lock.acquire(), timeout=timeout - (time.time() - start_time))
                 
-            # if "memory_required" in self.config:
-            #     await self.memory_checker.check_memory(self.config["memory_required"])
+            if "memory_required" in self.config:
+                await self.memory_checker.check_memory(self.config["memory_required"])
 
             self.logger.debug("Creating new LLM client")
             client = LLMClient(
