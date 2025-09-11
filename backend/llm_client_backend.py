@@ -204,11 +204,6 @@ class LlmClientBackend(BaseModelBackend):
         if msg_length > self.MAX_CONTEXT_LENGTH:
             return []
 
-        # self.inference_stream("reset", None, request)
-
-        print(f"messages: {messages}")
-        print(f"Truncated messages: {messages[-1:]}")
-        print(f"Final messages: {messages}")
         return [last_msg]
 
 
@@ -255,10 +250,8 @@ class LlmClientBackend(BaseModelBackend):
             if base64_images:
                 pass
             final_query.append("\n".join(query_lines))
-            print(f"Final query: {final_query}")
 
             query = "\n\n".join(filter(None, final_query))
-            print(f"268 Final query: {query}")
 
             self.logger.debug(
                 f"Processed query | System prompt: {len(system_prompt)} chars | "
