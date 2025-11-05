@@ -244,7 +244,7 @@ async def create_speech(
     try:
         request_data = await request.json()
         model = request_data.get("model")
-        voice = request_data.get("voice", "alloy")
+        voice = request_data.get("voice", "prompt_data")
         response_format = request_data.get("response_format", "mp3")
 
         if not model:
