@@ -94,23 +94,65 @@ class GetModelList:
                             new_entry['max_context_length'] = precompute_len
 
                     elif model_type == 'tts':
+                        mode_param = model_data.get("mode_param", {})
+                        precompute_len = None
+                        sample_rate = None
+                        cmm_size = None
+                        if isinstance(mode_param, dict):
+                            precompute_len = mode_param.get("precompute_len")
+                            cmm_size = mode_param.get("cmm_size")
+                            sample_rate = mode_param.get("sample_rate")
+
                         if 'melotts' in mode.lower():
                             obj = 'melotts.setup'
                             new_entry['memory_required'] = 59764
+                            new_entry['sample_rate'] = 16000
+                        elif 'cosyvoice' in mode.lower():
+                            obj = 'cosy_voice.setup'
+                            new_entry['memory_required'] = 1185772
+                            new_entry['sample_rate'] = 48000
                         else:
                             obj = 'tts.setup'
-        
+
+                        if cmm_size is not None:
+                            new_entry['memory_required'] = cmm_size
+                        if precompute_len is not None:
+                            new_entry['max_context_length'] = precompute_len
+                        if sample_rate is not None:
+                            new_entry['max_context_length'] = sample_rate
+
                         new_entry.update({
                             "response_format": "wav.base64",
                             "object": obj
                         })
                     elif model_type == 'asr':
+                        mode_param = model_data.get("mode_param", {})
+                        precompute_len = None
+                        cmm_size = None
+                        if isinstance(mode_param, dict):
+                            precompute_len = mode_param.get("precompute_len")
+                            cmm_size = mode_param.get("cmm_size")
+
                         if 'whisper' in mode.lower():
                             obj = 'whisper.setup'
                             if 'tiny' in mode:
-                                new_entry['memory_required'] = 289132
+                                new_entry['memory_required'] = 263860
+                            elif 'base' in mode.lower():
+                                new_entry['memory_required'] = 448212
+                            elif 'small' in mode.lower():
+                                new_entry['memory_required'] = 1132748
+                            elif 'turbo' in mode.lower():
+                                new_entry['memory_required'] = 2048000
+                            else:
+                                new_entry['memory_required'] = 1500000
                         else:
                             obj = 'asr.setup'
+
+                        if cmm_size is not None:
+                            new_entry['memory_required'] = cmm_size
+                        if precompute_len is not None:
+                            new_entry['max_context_length'] = precompute_len
+
                         new_entry.update({
                             "input": "pcm.base64",
                             "response_format": "asr.utf-8",
@@ -133,4 +175,4 @@ class GetModelList:
         return await loop.run_in_executor(
             None, 
             self._sys_client.model_list
-        ) 
+        )

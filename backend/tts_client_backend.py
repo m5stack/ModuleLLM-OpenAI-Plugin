@@ -11,6 +11,7 @@ from .base_model_backend import BaseModelBackend
 from client.tts_client import TTSClient
 from concurrent.futures import ThreadPoolExecutor
 from services.memory_check import MemoryChecker
+import tiktoken
 
 class TtsClientBackend(BaseModelBackend):
     SUPPORTED_FORMATS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
@@ -21,6 +22,7 @@ class TtsClientBackend(BaseModelBackend):
         self._active_clients = {}
         self._pool_lock = asyncio.Lock()
         self.logger = logging.getLogger("api.tts")
+        self.MAX_CONTEXT_LENGTH = model_config.get("max_context_length", 256)
         self.POOL_SIZE = 1
         self._inference_executor = ThreadPoolExecutor(max_workers=self.POOL_SIZE)
         self._active_tasks = weakref.WeakSet()
@@ -28,10 +30,11 @@ class TtsClientBackend(BaseModelBackend):
             host=self.config["host"],
             port=self.config["port"]
         )
-        self.sample_rate = 16000
+        self.sample_rate =  model_config.get("sample_rate", 16000)
         self.channels = 1
+        self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
-    async def _get_client(self):
+    async def _get_client(self, voice: str = "prompt_data"):
         try:
             await asyncio.wait_for(self._pool_lock.acquire(), timeout=30.0)
             
@@ -61,13 +64,13 @@ class TtsClientBackend(BaseModelBackend):
                 await loop.run_in_executor(
                     self._inference_executor,
                     lambda: client.setup(
-                        "melotts.setup",
+                        self.config["object"],
                         {
                             "model": self.config["model_name"],
                             "response_format": "pcm.stream.base64",
                             "input": "tts.utf-8",
                             "enoutput": True,
-                            "voice": "alloy"
+                            "prompt_dir": voice
                         }
                     )
                 )
@@ -129,9 +132,21 @@ class TtsClientBackend(BaseModelBackend):
         self._full_audio_buffer.write(pcm_data)
         
         return b''
+    
+    def _count_tokens(self, text: str) -> int:
+        """Count the number of tokens in a given text."""
+        return len(self.tokenizer.encode(text))
 
-    async def generate_speech(self, input_text: str, voice: str = "alloy", format: str = "mp3") -> AsyncGenerator[bytes, None]:
-        client = await self._get_client()
+    async def generate_speech(self, input_text: str, voice: str = "prompt_data", format: str = "mp3") -> AsyncGenerator[bytes, None]:
+        token_count = self._count_tokens(input_text)
+        if token_count > self.MAX_CONTEXT_LENGTH:
+            msg = (
+                f"Input token count ({token_count}) exceeds max context length ({self.MAX_CONTEXT_LENGTH})."
+            )
+            self.logger.warning(msg)
+            raise ValueError(msg)
+
+        client = await self._get_client(voice)
         task = asyncio.current_task()
         self._active_tasks.add(task)
         full_data = b''
