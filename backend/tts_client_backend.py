@@ -138,14 +138,13 @@ class TtsClientBackend(BaseModelBackend):
         return len(self.tokenizer.encode(text))
 
     async def generate_speech(self, input_text: str, voice: str = "prompt_data", format: str = "mp3") -> AsyncGenerator[bytes, None]:
-        if self._count_tokens(input_text) > self.MAX_CONTEXT_LENGTH:
-            self.logger.warning(
-                f"Input text length ({len(input_text)}) exceeds max context length ({self.MAX_CONTEXT_LENGTH})."
+        token_count = self._count_tokens(input_text)
+        if token_count > self.MAX_CONTEXT_LENGTH:
+            msg = (
+                f"Input token count ({token_count}) exceeds max context length ({self.MAX_CONTEXT_LENGTH})."
             )
-            raise ValueError(
-                f"Text too long: {len(input_text)} characters. "
-                f"Maximum allowed: {self.MAX_CONTEXT_LENGTH}."
-            )
+            self.logger.warning(msg)
+            raise ValueError(msg)
 
         client = await self._get_client(voice)
         task = asyncio.current_task()
