@@ -106,7 +106,8 @@ class LlmClientBackend(BaseModelBackend):
                         "max_token_len": request.max_tokens,
                         "temperature": request.temperature,
                         "top_p": request.top_p,
-                        "prompt": parsed_prompt
+                        "prompt": parsed_prompt,
+                        "b_video": True
                     }
                 )
             )
