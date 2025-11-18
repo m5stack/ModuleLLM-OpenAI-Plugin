@@ -93,6 +93,9 @@ class GetModelList:
                         if precompute_len is not None:
                             new_entry['max_context_length'] = precompute_len
 
+                        if '-vl-' in mode:
+                            new_entry['max_context_length'] = 1152
+
                     elif model_type == 'tts':
                         mode_param = model_data.get("mode_param", {})
                         precompute_len = None
