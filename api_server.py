@@ -90,7 +90,7 @@ class ModelDispatcher:
                             old_instance = self.backends.pop(old_model_name, None)
                             if old_instance:
                                 await old_instance.close()
-                        self.asr_models.clear()
+                        self.tts_models.clear()
                     self.backends[model_name] = TtsClientBackend(model_config)
                     self.tts_models.add(model_name)
                 elif model_config["type"] == "asr":
