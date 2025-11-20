@@ -110,6 +110,7 @@ class GetModelList:
                             obj = 'melotts.setup'
                             new_entry['memory_required'] = 59764
                             new_entry['sample_rate'] = 16000
+                            new_entry['max_context_length'] = 32768
                         elif 'cosyvoice' in mode.lower():
                             obj = 'cosy_voice.setup'
                             new_entry['memory_required'] = 1185772
