@@ -9,13 +9,17 @@ class MemoryChecker:
         self.port = port
         self.logger = logging.getLogger("memory_check")
         self._sys_client: Optional[SYSClient] = None
+
+    def _ensure_client(self):
+        if not self._sys_client:
+            self.logger.debug("Initializing SYSClient...")
+            self._sys_client = SYSClient(host=self.host, port=self.port)
         
     async def check_memory(self, required_mem: int) -> None:
         try:
-            if not self._sys_client:
-                self._sys_client = SYSClient(host=self.host, port=self.port)
+            self._ensure_client()
                 
-            cmm_info = await self._get_cmminfo()
+            cmm_info = await self.get_cmminfo()
             remain_mem = cmm_info["data"]["remain"]
             
             self.logger.debug(f"Memory check - Required: {required_mem}, Available: {remain_mem}")
@@ -29,7 +33,9 @@ class MemoryChecker:
             self.logger.error(f"Memory check failed: {str(e)}")
             raise
 
-    async def _get_cmminfo(self):
+    async def get_cmminfo(self):
+        self._ensure_client()
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None, 
