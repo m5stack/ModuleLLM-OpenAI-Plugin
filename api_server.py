@@ -63,16 +63,27 @@ class ModelDispatcher:
             port=config.data["server"]["port"]
         )
         self.lock = asyncio.Lock()
+        self.total_memory = None
+        self.current_used_memory = 0
 
     async def _ensure_memory_available(self, required_mem: int):
         if required_mem <= 0:
             return
-
         try:
             cmm_info = await self.memory_checker.get_cmminfo()
-            remain_mem = cmm_info["data"]["remain"]
+            external_remain = cmm_info["data"]["remain"]
             
-            logger.debug(f"Memory Check | Required: {required_mem} | Available: {remain_mem}")
+            if self.total_memory is None:
+                self.total_memory = cmm_info["data"].get("total", external_remain)
+                logger.info(f"Memory Manager Initialized | Total Capacity: {self.total_memory}")
+
+            internal_remain = self.total_memory - self.current_used_memory
+            
+            remain_mem = min(internal_remain, external_remain)
+
+            logger.debug(f"Memory Check | Required: {required_mem} | "
+                         f"External Remain: {external_remain} | Internal Remain: {internal_remain} | "
+                         f"Effective Available: {remain_mem}")
 
             if remain_mem >= required_mem:
                 return
@@ -103,11 +114,17 @@ class ModelDispatcher:
             for model_name in models_to_unload:
                 logger.info(f"Unloading model '{model_name}' to free memory...")
                 backend = self.backends.pop(model_name)
+                
+                model_conf = config.data["models"].get(model_name, {})
+                mem_freed = model_conf.get("memory_required", 0)
+                self.current_used_memory -= mem_freed
+                if self.current_used_memory < 0:
+                    self.current_used_memory = 0
+                
                 if backend:
                     await backend.close()
             
             # await asyncio.sleep(0.1) 
-
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise e
@@ -120,29 +137,34 @@ class ModelDispatcher:
                 backend = self.backends.pop(model_name)
                 self.backends[model_name] = backend
                 return backend
-
+            
             model_config = config.data["models"].get(model_name)
             if model_config is None:
                 return None
-
+            
             required_mem = model_config.get("memory_required", 0)
+            
             await self._ensure_memory_available(required_mem)
-
+            
             logger.info(f"Loading model: {model_name} (Mem Required: {required_mem})")
             
+            backend_instance = None
             if model_config["type"] == "openai_proxy":
-                self.backends[model_name] = OpenAIProxyBackend(model_config)
+                backend_instance = OpenAIProxyBackend(model_config)
             elif model_config["type"] in ("llm", "vlm"):
-                self.backends[model_name] = LlmClientBackend(model_config)
+                backend_instance = LlmClientBackend(model_config)
             elif model_config["type"] == "vision_model":
-                self.backends[model_name] = VisionModelBackend(model_config)
+                backend_instance = VisionModelBackend(model_config)
             elif model_config["type"] == "tts":
-                self.backends[model_name] = TtsClientBackend(model_config)
+                backend_instance = TtsClientBackend(model_config)
             elif model_config["type"] == "asr":
-                self.backends[model_name] = ASRClientBackend(model_config)
+                backend_instance = ASRClientBackend(model_config)
             else:
                 return None
-            
+
+            self.backends[model_name] = backend_instance
+            self.current_used_memory += required_mem
+
             return self.backends.get(model_name)
 
 async def initialize():
