@@ -30,7 +30,7 @@ class TtsClientBackend(BaseModelBackend):
             host=self.config["host"],
             port=self.config["port"]
         )
-        self.sample_rate =  model_config.get("sample_rate", 16000)
+        self.sample_rate =  model_config.get("audio_rate", 16000)
         self.channels = 1
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
