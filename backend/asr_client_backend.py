@@ -58,16 +58,17 @@ class ASRClientBackend(BaseModelBackend):
 
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
-                None,
-                client.setup,
-                "whisper.setup",
-                {
+                self._inference_executor,
+                lambda: client.setup(
+                    self.config["object"],
+                    {
                     "model": self.config["model_name"],
                     "response_format": "asr.utf-8",
-                    "input": "whisper.wav.stream.base64",
+                    "input": "whisper.asr.wav.stream.base64",
                     "language": language,
                     "enoutput": True
-                }
+                    }
+                )
             )
             return client
         except asyncio.TimeoutError:

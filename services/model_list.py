@@ -99,22 +99,24 @@ class GetModelList:
                     elif model_type == 'tts':
                         mode_param = model_data.get("mode_param", {})
                         precompute_len = None
-                        sample_rate = None
+                        audio_rate = None
                         cmm_size = None
                         if isinstance(mode_param, dict):
                             precompute_len = mode_param.get("precompute_len")
                             cmm_size = mode_param.get("cmm_size")
-                            sample_rate = mode_param.get("sample_rate")
+                            audio_rate = mode_param.get("audio_rate")
 
                         if 'melotts' in mode.lower():
                             obj = 'melotts.setup'
                             new_entry['memory_required'] = 59764
-                            new_entry['sample_rate'] = 16000
+                            new_entry['audio_rate'] = 16000
                             new_entry['max_context_length'] = 32768
+                            if audio_rate is not None:
+                                new_entry['audio_rate'] = audio_rate
                         elif 'cosyvoice' in mode.lower():
                             obj = 'cosy_voice.setup'
                             new_entry['memory_required'] = 1185772
-                            new_entry['sample_rate'] = 48000
+                            new_entry['audio_rate'] = 48000
                         else:
                             obj = 'tts.setup'
 
@@ -122,8 +124,6 @@ class GetModelList:
                             new_entry['memory_required'] = cmm_size
                         if precompute_len is not None:
                             new_entry['max_context_length'] = precompute_len
-                        if sample_rate is not None:
-                            new_entry['max_context_length'] = sample_rate
 
                         new_entry.update({
                             "response_format": "wav.base64",
