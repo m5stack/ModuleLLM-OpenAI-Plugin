@@ -284,6 +284,7 @@ class LlmClientBackend(BaseModelBackend):
                             }
                         # Add normal completion marker
                         yield {
+                            "object": "chat.completion.chunk",
                             "choices": [{
                                 "delta": {},
                                 "finish_reason": "stop"
