@@ -49,7 +49,7 @@ class ASRClientBackend(BaseModelBackend):
                 
             if "memory_required" in self.config:
                 await self.memory_checker.check_memory(self.config["memory_required"])
-            self.logger.debug("Creating new LLM client")
+            self.logger.debug("Creating new ASR client")
             client = ASRClient(
                 host=self.config["host"],
                 port=self.config["port"]
